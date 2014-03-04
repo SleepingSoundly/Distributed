@@ -5,15 +5,16 @@ import sys
 import socket
 import os
 
-proc_number = sys.argv[1]
+proc_number = int(sys.argv[1])
 HOST = 'localhost'    # The remote host
 PORT = 8008              # The same port as used by the server
-s = None
+
 
 
 class MyThread(threading.Thread):
 	def run(self):
-		print("{} started!".format(self.getName()))
+		print("{0} started!".format(self.getName()))
+		s = None
                       # "Thread-x started!"
 		for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
 			af, socktype, proto, canonname, sa = res
@@ -30,10 +31,12 @@ class MyThread(threading.Thread):
 				continue
 			break
 		if s is None:
-			print 'could not open socket'
-			sys.exit(1)		    
-		else: 
-			print 'socket opened!'
+			print('could not open socket')
+			sys.exit(1)
+		s.send('SOCKETOPEN' + "{0} started!".format(self.getName()))
+		data = s.recv(1024)
+		s.close()
+		print('Recieved: ', repr(data))
 
         #I AM THE CLIENT PROCESS, I CREATE STUFF
 
@@ -41,32 +44,32 @@ class MyThread(threading.Thread):
  
 if __name__ == '__main__':	
 	for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE):
-    af, socktype, proto, canonname, sa = res
-    try:
-		s = socket.socket(af, socktype, proto)
-    except socket.error, msg:
-		s = None
-		continue
-    try:
-		s.bind(sa)
-		    for x in range(int(proc_number)):                                     # Four times...
-		        mythread = MyThread(name = "Client-{}".format(x + 1))  # ...Instantiate a thread and pass a unique ID to it
-		        mythread.start() 
-	#threads all started, with client sockets being created        
-		s.listen(5)
-    	except socket.error, msg:
+		af, socktype, proto, canonname, sa = res
+		try:
+			s = socket.socket(af, socktype, proto)
+		except socket.error, msg:
+			s = None
+			continue
+		try:
+			s.bind(sa)
+			for x in range(int(proc_number)):                                     # Four times...
+				mythread = MyThread(name = "Client-{0}".format(x + 1))  # ...Instantiate a thread and pass a unique ID to it
+				mythread.start() 
+		#threads all started, with client sockets being created        
+			s.listen(proc_number)
+		except socket.error, msg:
 			s.close()
 			s = None
 			continue
-    	break
+		break
 		if s is None:
-		    print 'could not open socket'
-		    sys.exit(1)                                 
+			print('could not open socket')
+			sys.exit(1)                                 
 
 def starter( ):
 	while 1:
 		conn, addr = s.accept()
-		print 'Connected by', addr
+		print ('Connected by', addr)
 		reapChildren( )
 		childPid = os.fork( )
 		if childPid ==0:
@@ -85,7 +88,7 @@ def handleClient(conn):
 	while 1:
 		data = conn.recv(1000)
 		if not data: break
-		print data # this will eventually have the snapshot in it to print
+		print (data) # this will eventually have the snapshot in it to print
 		break
 	conn.close()
 	os._exit(0)

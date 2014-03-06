@@ -7,7 +7,7 @@ import os
 import random
 proc_number = int(sys.argv[1])
 HOST = 'localhost'    # The remote host
-PORT = 8007             # The same port as used by the server
+PORT = 8014             # The same port as used by the server
 
 
 
@@ -34,7 +34,6 @@ class MyThread(threading.Thread):
                 if s is None:
                         print('could not open socket')
                         sys.exit(1)
-                #ClientSocket.append("{0}".format(self.getName()))
                 time.sleep(5)
                 m = "Client-" +str(random.randint(1,proc_number)) + ":"  +"{0}".format(self.getName()) +': ' + str(random.randint(1,10)) + ' widgets requested'
                 s.send(m)
@@ -119,6 +118,7 @@ def handleClient(conn):
 		print('ROUND 2')
                 print (ClientSocket)
                 print (activeSockets)
+		if len(activeSockets) is not proc_numb: 
                 i = ClientSocket.index(sell)
                 print(sell + " : " + str(i) + ":" + str(activeSockets[i]))
                 (activeSockets[i]).send('recieved data from ' + buy)

@@ -1,8 +1,23 @@
-#multicast.py
 import socket
 import sys
 import threading
 import time
+
+
+key_vector = []
+value_vector = []
+total_nodes = 0
+me = 0
+
+def count_nodes():
+	f = open('config.txt', 'r')
+	i = 0
+	for line in f:
+		if line is '':
+			f.close()
+			return
+		total_nodes += 1
+
 
 def config( ):
 	print 'Config file initializing...\n'
@@ -15,6 +30,7 @@ def config( ):
 		UDP_PORT = 8000
 		f.write('P1:127.0.0.1:5001\n')
 		f.close()
+		me = 1
 		return 1
 
  
@@ -23,11 +39,12 @@ def config( ):
 		print line
 		i = i + 1
 	UDP_IP = '127.0.0.' + str(i)
-	UDP_PORT = int('800' + str(i))
-	p = 'P' + str(i) + ':' + '127.0.0.' + str(i) + ':' +  '800' + str(i) +  '\n'
+	UDP_PORT = int('500' + str(i))
+	p = 'P' + str(i) + ':' + '127.0.0.' + str(i) + ':' +  '500' + str(i) +  '\n'
 	f.write(p)
 	print p
 	f.close()
+	me = i
 	return i
 
 
@@ -71,15 +88,25 @@ def deliver(port, ip):
 		data = unicast_receive(port, ip)
 		print data + '\n'
 		command = data.split(":")[0] 
+		level = int(data.split(":")[2])
+		if total_nodes <= 1:
+			count()
+		node = data.split(":")[1] % total_nodes
+
 		if command is "insert":
-			#each thread has an array with its keys and values
-			#through that sucker in there with a time stamp
-		#else if command is "get":
+			key_vector.append(data.split(":")[1])
+			value_vector.append(data.split(":")[3])
+			if level is 1 and me is node:
+				#if we're doing ONE and we're in the main copy, 
+				#send to two closest neighboors
+				insert(data.split(":")[1], data.split(":")[3], data.split(":"), 'replicate')
+		else if command is "get":
+
 		#else if command is "delete":
 		#else if command is "update":
 		else:
 			print "Invalid Command"
-			
+
 
 
 
@@ -97,10 +124,18 @@ class My_S_Thread(threading.Thread):
 		while valid:
 			message = raw_input()
 			#print message
-			if message is 'Quit': 
+			command = message.split(' ')[0]
+			if command is 'quit': 
 				valid = False				  
-			else: 
-				multicast(name, message)
+			else if command is "insert": 
+				insert(message.split(' ')[1], message.split(' ')[2], message.split(' ')[3], "insert")
+			else if command is "get":
+				get(message.split(' ')[1], message.split(' ')[2])
+			else if command is "delete":
+			else if command is "update":
+			else:
+				print "Invalid command,  please try again"
+
 
 		print "{} finished!".format(self.getName())
 
@@ -116,8 +151,4 @@ mythread.start()
 
 mythread =  My_S_Thread(name = "sender")
 mythread.start()
-
-
-
-
 

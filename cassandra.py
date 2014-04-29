@@ -1,5 +1,3 @@
-#cassandra.py
-
 import sys
 import hashlib
 
@@ -8,12 +6,11 @@ def search(key):
 
 
 
-
-
-
-def insert(key, value, level):
+def insert(key, value, level, t):
 	#inserts a key at the appropriate node
 	#first finds limits of "chord"
+	# if t = replicate, it's level 1 and 
+	# it needs to replicate to two more nodes
 	f = open('config.txt', 'r')
 	i = 0
 	for line in f:
@@ -24,14 +21,23 @@ def insert(key, value, level):
 		p[i] = line.split(":")[0]
 		ip[i] = line.split(":")[1]
 		port[i] = line.split(":")[2]
-		i += 1
+		total_nodes += 1
+		
 
 	#determine which node receives this value
 
-	node = key % i
-	
+	node = key % total_nodes
 	#create key/value/level/timestamp object
 	message = "insert:" + str(key) +":"+ str(level)+":"+   str(value)
+	
+
+	if node is me and t is 'replicate':
+		node = (node + 1) % i
+		unicast_send(int(port[node]), ip[node], p[node], message)
+		node = (node + 1) % i
+		unicast_send(int(port[node]), ip[node], p[node], message)
+		return
+
 	if level is 1:
 		unicast_send(int(port[node]), ip[node], p[node], message)
 	else: 
@@ -42,7 +48,7 @@ def insert(key, value, level):
 		#sent and replicated
 
 
-def get(key, level, home_port, home_ip):
+def get(key, level):
 	#get a key at the appropriate node
 	#first finds limits of "chord"
 	f = open('config.txt', 'r')
@@ -66,16 +72,16 @@ def get(key, level, home_port, home_ip):
 		for z in range(0, 2): 
 			unicast_send(int(port[z]), ip[z], p[z], message)
 			node = (node + 1) % i
-		
+
 	#message sent
 	#need to receive 
 	i = 0
 	while len(result) is not 3:
-		result[i] = unicast_receive(home_port, home_ip)
+		result[i] = unicast_receive(UDP_PORT, UDP_IP)
 		i += 1
 	for i in range(0,2):
 		print result[i].split(":")[1] "has a copy of the key"
-	
+
 
 
 

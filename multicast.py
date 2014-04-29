@@ -12,7 +12,7 @@ def config( ):
 		f = open('config.txt', 'w')
 		PROC = 'P1'
 		UDP_IP = '127.0.0.1'
-		UDP_PORT = 5000
+		UDP_PORT = 8000
 		f.write('P1:127.0.0.1:5001\n')
 		f.close()
 		return 1
@@ -23,8 +23,8 @@ def config( ):
 		print line
 		i = i + 1
 	UDP_IP = '127.0.0.' + str(i)
-	UDP_PORT = int('500' + str(i))
-	p = 'P' + str(i) + ':' + '127.0.0.' + str(i) + ':' +  '500' + str(i) +  '\n'
+	UDP_PORT = int('800' + str(i))
+	p = 'P' + str(i) + ':' + '127.0.0.' + str(i) + ':' +  '800' + str(i) +  '\n'
 	f.write(p)
 	print p
 	f.close()
@@ -70,14 +70,24 @@ def deliver(port, ip):
 	while True: 
 		data = unicast_receive(port, ip)
 		print data + '\n'
+		command = data.split(":")[0] 
+		if command is "insert":
+			#each thread has an array with its keys and values
+			#through that sucker in there with a time stamp
+		#else if command is "get":
+		#else if command is "delete":
+		#else if command is "update":
+		else:
+			print "Invalid Command"
+			
 
 
 
 class My_R_Thread(threading.Thread):
 	def run(self):
-		print "{} started!\n".format(self.getName()) 
+		#print "{} started!\n".format(self.getName()) 
 		deliver(UDP_PORT, UDP_IP)
-		print "{} finished!".format(self.getName())
+		#print "{} finished!".format(self.getName())
 
 class My_S_Thread(threading.Thread):
 	def run(self):
